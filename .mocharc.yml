@@ -1,0 +1,13 @@
+extension:
+- js
+- ts
+recursive: true
+spec:
+- test/bin
+- test/lib
+timeout: false
+v8-stack-trace-limit: 100
+watch-files:
+- bin/**
+- lib/**
+- test/**

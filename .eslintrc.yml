@@ -1,0 +1,19 @@
+extends:
+- plugin:@mysticatea/es2020
+- plugin:@mysticatea/+node
+
+rules:
+  no-console: "off"
+  no-process-env: "off"
+  no-void: "off"
+
+ignorePatterns:
+- coverage
+- dist
+- node_modules
+
+settings:
+  node:
+    convertPath:
+    - include: ["bin/**/*.ts", "lib/**/*.ts"]
+      replace: ["^(.+?)\\.ts$", "$1.js"]
