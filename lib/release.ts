@@ -72,7 +72,7 @@ export async function release() {
 }
 
 function wrapNode(s: string): string {
-    if (path.extname(s) === ".js") {
+    if (/\.[cm]?js"?$/u.test(s)) {
         return `${quote(process.execPath)} ${s}`
     }
     return s
