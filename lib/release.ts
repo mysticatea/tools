@@ -1,11 +1,27 @@
 import { promises as fs } from "fs"
 import path from "path"
-import { cd, quote, rm, sh, stdoutOf } from "./util"
+import { GitProgram, NpmProgram, cd, rm, sh, stdoutOf } from "./cli-utils"
 
-export async function release() {
+/**
+ * Release an npm package.
+ *
+ * This function assume to be called in `postversion` script of npm.
+ *
+ * Does the following steps:
+ *
+ * 1. Remove the latest version tag.
+ * 2. Create an orphan commit with the `dist` directory content.
+ * 3. Set the version tag at that orphan commit.
+ * 4. Push the version tag and the commit.
+ * 5. Run `npm publish` at the `dist` directory.
+ *
+ * @param options Options.
+ */
+export async function release({
+    artifactRootPath = "dist",
+    noPublish = false,
+}: release.Options = {}) {
     const packageJsonPath = path.join(process.cwd(), "package.json")
-    const npmPath = wrapNode(quote(process.env.npm_execpath || "npm"))
-    const gitPath = quote(process.env.npm_config_git || "git")
     const npmLifecycleEvent = process.env.npm_lifecycle_event
 
     // Ensure this is in the postversion script.
@@ -19,9 +35,9 @@ export async function release() {
     )
 
     // Read origin.
-    const originUrl = await stdoutOf(`${gitPath} remote get-url origin`)
+    const originUrl = await stdoutOf(`${GitProgram} remote get-url origin`)
     const originBranch = await stdoutOf(
-        `${gitPath} symbolic-ref --short refs/remotes/origin/HEAD`,
+        `${GitProgram} symbolic-ref --short refs/remotes/origin/HEAD`,
     )
     if (!originUrl) {
         throw new Error('Remote "origin" must be set.')
@@ -34,32 +50,32 @@ export async function release() {
 
     // Read git information.
     const defaultBranch = originBranch.slice("origin/".length)
-    const branch = await stdoutOf(`${gitPath} symbolic-ref --short HEAD`)
+    const branch = await stdoutOf(`${GitProgram} symbolic-ref --short HEAD`)
     const isDefaultBranch = branch === defaultBranch
     const version = isDefaultBranch ? rawVersion : `${rawVersion}-${branch}`
-    const sha1 = await stdoutOf(`${gitPath} log -1 --format="%h"`)
+    const sha1 = await stdoutOf(`${GitProgram} log -1 --format="%h"`)
     const commitMessage = `🔖 ${version} (built with ${sha1})`
 
     // Push
-    await sh(`${gitPath} push`)
+    await sh(`${GitProgram} push origin "${branch}"`)
 
     // Delete the tag `npm version` created to use it for the release commit.
     try {
-        await sh(`${gitPath} tag -d "v${rawVersion}"`)
+        await sh(`${GitProgram} tag -d "v${rawVersion}"`)
     } catch (ignore) {
         // Ignore
     }
 
     // Make the release commit that contains only `dist` directory.
-    cd("dist")
-    await sh(`${gitPath} init`)
+    cd(artifactRootPath)
+    await sh(`${GitProgram} init`)
     try {
-        await sh(`${gitPath} add .`)
-        await sh(`${gitPath} commit -m "${commitMessage}"`)
-        await sh(`${gitPath} tag "v${version}"`)
-        await sh(`${gitPath} push "${originUrl}" "v${version}"`)
-        if (isDefaultBranch) {
-            await sh(`${npmPath} publish`)
+        await sh(`${GitProgram} add .`)
+        await sh(`${GitProgram} commit -m "${commitMessage}"`)
+        await sh(`${GitProgram} tag "v${version}"`)
+        await sh(`${GitProgram} push "${originUrl}" "v${version}"`)
+        if (isDefaultBranch && !noPublish) {
+            await sh(`${NpmProgram} publish`)
         }
     } finally {
         // Clean
@@ -67,13 +83,13 @@ export async function release() {
         cd("..")
 
         // Fetch the new tag.
-        await sh(`${gitPath} fetch --tags`)
+        await sh(`${GitProgram} fetch --tags`)
     }
 }
 
-function wrapNode(s: string): string {
-    if (/\.[cm]?js"?$/u.test(s)) {
-        return `${quote(process.execPath)} ${s}`
+export namespace release {
+    export type Options = {
+        artifactRootPath?: string
+        noPublish?: boolean
     }
-    return s
 }

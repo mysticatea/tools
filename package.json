@@ -9,13 +9,22 @@
     "node": ">=12.10.0"
   },
   "bin": {
+    "bump-version": "bin/bump-version.js",
     "release": "bin/release.js"
   },
-  "main": "lib/index.js",
   "files": [
     "bin",
     "lib"
   ],
+  "exports": {
+    ".": null,
+    "./lib/bump-version": "./lib/bump-version.js",
+    "./lib/cli-utils": "./lib/cli-utils.js",
+    "./lib/release": "./lib/release.js",
+    "./bump-version": "./lib/bump-version.js",
+    "./cli-utils": "./lib/cli-utils.js",
+    "./release": "./lib/release.js"
+  },
   "dependencies": {},
   "devDependencies": {
     "@mysticatea/eslint-plugin": "^13.0.0",
@@ -47,5 +56,6 @@
     "url": "https://github.com/mysticatea/tools/issues"
   },
   "homepage": "https://github.com/mysticatea/tools#readme",
-  "funding": "https://github.com/sponsors/mysticatea"
+  "funding": "https://github.com/sponsors/mysticatea",
+  "sideEffects": false
 }
