@@ -1,0 +1,1 @@
+{"version":3,"file":"bump-version.js","sourceRoot":"","sources":["../../bin/bump-version.ts"],"names":[],"mappings":";;;AACA,sDAAiD;AAEjD,0BAAW,EAAE,CAAC,KAAK,CAAC,KAAK,CAAC,EAAE;IACxB,OAAO,CAAC,QAAQ,GAAG,CAAC,CAAA;IACpB,OAAO,CAAC,KAAK,CAAC,KAAK,CAAC,OAAO,CAAC,CAAA;AAChC,CAAC,CAAC,CAAA"}
